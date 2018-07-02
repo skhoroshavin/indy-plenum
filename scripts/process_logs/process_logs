@@ -937,14 +937,36 @@ class AllRequestData:
 ###########################################################################################
 
 
+class LogMessageStats(object):
+    def __init__(self):
+        self.data = {}
+
+    def add(self, source, value=1):
+        try:
+            self.data[source] += value
+        except KeyError:
+            self.data[source] = value
+
+    def merge(self, stats):
+        for key, value in stats.data.items():
+            self.add(key, value)
+
+    def dump(self):
+        items = sorted(((value, key) for key, value in self.data.items()), reverse=True)
+        for v in items:
+            print("{}: {}".format(v[1], v[0]))
+
+
 class OutputData:
     def __init__(self, config):
+        self.stats = LogMessageStats()
         self.logs = {name: OutputLog(params) for name, params in config.get("logs", {}).items()}
         self.timelogs = {name: TimeLog(params) for name, params in config.get("timelogs", {}).items()}
         self.counters = {name: LogCounter(params) for name, params in config.get("counters", {}).items()}
         self.requests = AllRequestData(config.get("requests", {}))
 
     def merge(self, other):
+        self.stats.merge(other.stats)
         for name in set(self.logs) & set(other.logs):
             self.logs[name].merge(other.logs[name])
         for name in set(self.timelogs) & set(other.timelogs):
@@ -954,6 +976,7 @@ class OutputData:
         self.requests.merge(other.requests)
 
     def dump(self):
+        self.stats.dump()
         self.requests.dump()
         for log in self.logs.values():
             log.dump()
@@ -984,6 +1007,8 @@ def process_log(log: InputLogInfo):
                 continue
             if max_timestamp is not None and message.timestamp > max_timestamp:
                 continue
+            if message.level not in ['DEBUG', 'TRACE']:
+                output_data.stats.add(message.source)
             global_chain_set.process("main", message, output_data)
     except EOFError as e:
         print("{}: {}".format(log.filename, e))
