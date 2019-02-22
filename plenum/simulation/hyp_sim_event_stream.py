@@ -12,13 +12,12 @@ from plenum.simulation.sim_event_stream import sim_events, SimEventStream, ListE
 def sim_event_stream(draw, stream: SimEventStream, max_size=100):
     result = []
     for _ in range(max_size):
-        event = stream.peek()
+        event = stream.pop()
         if event is None:
             break
         result.append(event)
         if isinstance(event.payload, ErrorEvent):
             break
-        stream.advance(draw)
     return result
 
 

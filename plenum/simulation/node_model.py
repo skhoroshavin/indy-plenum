@@ -125,7 +125,6 @@ class NodeModel:
 
     def _send(self, message, delay=1):
         self._internal_outbox.add(SimEvent(timestamp=self._ts + delay, payload=message))
-        self.outbox.sort()
 
     def _broadcast(self, payload):
         for name in self._node_names:

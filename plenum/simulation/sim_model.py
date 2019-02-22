@@ -42,14 +42,13 @@ def process_model(draw, model: SimModel,
     ok_rounds = 0
     err_rounds = 0
     for _ in range(max_size):
-        event = model.outbox().pop(draw)
+        event = model.outbox().pop()
         if event is None:
             break
         event_log.append(event)
         if isinstance(event.payload, ErrorEvent):
             break
         model.process(draw, event)
-        model.outbox().sort()
 
         if model.error_status() is None:
             ok_rounds += 1

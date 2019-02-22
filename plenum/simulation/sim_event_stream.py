@@ -3,7 +3,7 @@ from math import inf
 
 from hypothesis import strategies as st
 from hypothesis.strategies import composite
-from typing import NamedTuple, Any, List, Optional, Set, Union, Iterable, Callable
+from typing import NamedTuple, Any, List, Optional, Set, Union, Iterable, Callable, Tuple
 
 from sortedcontainers import SortedListWithKey
 
@@ -29,22 +29,12 @@ def sim_events(draw, payload, min_size=0, max_size=20, min_interval=1, max_inter
 
 class SimEventStream(ABC):
     @abstractmethod
-    def advance(self, draw):
-        pass
-
-    @abstractmethod
     def peek(self) -> Optional[SimEvent]:
         pass
 
     @abstractmethod
-    def sort(self):
+    def pop(self) -> Optional[SimEvent]:
         pass
-
-    def pop(self, draw) -> Optional[SimEvent]:
-        result = self.peek()
-        if result is not None:
-            self.advance(draw)
-        return result
 
 
 class ListEventStream(SimEventStream):
@@ -66,41 +56,38 @@ class ListEventStream(SimEventStream):
     def events(self):
         return self._events[:]
 
-    def advance(self, _):
-        self._events.pop(0)
-
     def peek(self) -> Optional[SimEvent]:
         if len(self._events) > 0:
             return self._events[0]
 
-    def sort(self):
-        pass
+    def pop(self) -> Optional[SimEvent]:
+        if len(self._events) > 0:
+            return self._events.pop(0)
 
 
 class CompositeEventStream(SimEventStream):
     def __init__(self, *args):
         self._streams = [s for s in args]
-        self.sort()
 
     def add_stream(self, stream):
         self._streams.append(stream)
-        self.sort()
-
-    def advance(self, draw):
-        self._streams[0].advance(draw)
-        self.sort()
 
     def peek(self) -> Optional[SimEvent]:
-        return self._streams[0].peek()
+        return self._next_stream_event()[1]
 
-    def sort(self):
-        for stream in self._streams:
-            stream.sort()
-        self._streams.sort(key=lambda s: self._stream_key(s))
+    def pop(self) -> Optional[SimEvent]:
+        stream, _ = self._next_stream_event()
+        if stream is not None:
+            return stream.pop()
 
-    @staticmethod
-    def _stream_key(s):
-        ev = s.peek()
-        if ev is None:
-            return inf
-        return ev.timestamp
+    def _next_stream_event(self) -> Tuple[SimEventStream, SimEvent]:
+        stream = None
+        event = None
+        for s in self._streams:
+            ev = s.peek()
+            if ev is None:
+                continue
+            if event is None or ev.timestamp < event.timestamp:
+                stream = s
+                event = ev
+        return stream, event
