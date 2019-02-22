@@ -3,7 +3,7 @@ from random import shuffle
 from hypothesis import given
 from hypothesis import strategies as st
 
-from plenum.simulation.helper import some_event, check_event_stream_invariants, SomeEvent, MAX_EVENTS_SIZE, some_events
+from plenum.simulation.test.helper import some_event, check_event_stream_invariants, SomeEvent, MAX_EVENTS_SIZE, some_events
 from plenum.simulation.sim_event_stream import sim_events, SimEventStream, ListEventStream, CompositeEventStream, \
     ErrorEvent
 
