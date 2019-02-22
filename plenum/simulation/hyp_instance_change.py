@@ -4,7 +4,6 @@ from hypothesis import given, settings
 from plenum.simulation.pool_model import RestartEvent, OutageEvent, CorruptEvent, PoolModel
 from plenum.simulation.sim_event_stream import ListEventStream, sim_events, ErrorEvent
 from plenum.simulation.sim_model import ModelWithExternalEvents, process_model
-from plenum.simulation.timer_model import TimerModel
 
 settings.register_profile("big", buffer_size=128 * 1024, max_examples=1000)
 settings.load_profile("big")

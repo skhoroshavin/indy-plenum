@@ -4,8 +4,22 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from plenum.simulation.helper import some_event, check_event_stream_invariants, SomeEvent, MAX_EVENTS_SIZE, some_events
-from plenum.simulation.sim_event_stream import sim_events, RandomEventStream, sim_event_stream, ListEventStream, \
-    CompositeEventStream
+from plenum.simulation.sim_event_stream import sim_events, SimEventStream, ListEventStream, CompositeEventStream, \
+    ErrorEvent
+
+
+@st.composite
+def sim_event_stream(draw, stream: SimEventStream, max_size=100):
+    result = []
+    for _ in range(max_size):
+        event = stream.peek()
+        if event is None:
+            break
+        result.append(event)
+        if isinstance(event.payload, ErrorEvent):
+            break
+        stream.advance(draw)
+    return result
 
 
 @st.composite
@@ -36,32 +50,6 @@ def test_sim_events(params_and_events):
 
     # Intervals between events should be in defined interval with some tolerance
     assert all(min_interval <= b.timestamp - a.timestamp <= max_interval
-               for a, b in zip(events, events[1:]))
-
-
-@st.composite
-def random_event_stream(draw):
-    min_interval = draw(st.integers(min_value=1, max_value=1000))
-    max_interval = draw(st.integers(min_value=min_interval, max_value=1000))
-    stream = RandomEventStream(draw, some_event(),
-                               min_interval, max_interval)
-    events = draw(sim_event_stream(stream, max_size=MAX_EVENTS_SIZE))
-    return min_interval, max_interval, events
-
-
-@given(params_and_events=random_event_stream())
-def test_random_event_stream_properties(params_and_events):
-    min_interval, max_interval, events = params_and_events
-    check_event_stream_invariants(events)
-
-    # Maximum allowed number of events should be generated
-    assert len(events) == MAX_EVENTS_SIZE
-
-    # Random event stream should only contain expected events
-    assert all(isinstance(ev.payload, SomeEvent) for ev in events)
-
-    # Intervals between events should be in defined interval with some tolerance
-    assert all(0.999 * min_interval <= b.timestamp - a.timestamp <= 1.001 * max_interval
                for a, b in zip(events, events[1:]))
 
 
@@ -123,28 +111,3 @@ def test_composite_two_normal_event_streams_properties(inputs_and_events):
     # All input events should be present in generated events
     assert all(ev in events for ev in input_a)
     assert all(ev in events for ev in input_b)
-
-
-@st.composite
-def composite_normal_and_random_event_stream(draw):
-    input = draw(some_events(max_size=MAX_EVENTS_SIZE))
-    stream_a = RandomEventStream(draw, some_event())
-    stream_b = ListEventStream(input)
-    stream = CompositeEventStream(stream_a, stream_b)
-    events = draw(sim_event_stream(stream, max_size=MAX_EVENTS_SIZE))
-    return input, events
-
-
-@given(input_and_events=composite_normal_and_random_event_stream())
-def test_composite_normal_and_random_event_stream_properties(input_and_events):
-    input, events = input_and_events
-    check_event_stream_invariants(events)
-
-    # Maximum allowed number of events should be generated
-    assert len(events) == MAX_EVENTS_SIZE
-
-    # Random event stream should only contain expected events
-    assert all(isinstance(ev.payload, SomeEvent) for ev in events)
-
-    # Assert all fixed events are added to output unless they are too late
-    # assert all(ev in events for ev in input if ev.timestamp <= events[-1].timestamp)

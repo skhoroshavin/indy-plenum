@@ -15,7 +15,7 @@ class Callback():
 
 @given(st.data())
 def test_timer_model_can_schedule_event(data):
-    timer = TimerModel()
+    timer = TimerModel('test')
     cb = Callback()
 
     timer.schedule(5, cb)
@@ -29,7 +29,7 @@ def test_timer_model_can_schedule_event(data):
 
 @given(st.data())
 def test_timer_model_can_cancel_events(data):
-    timer = TimerModel()
+    timer = TimerModel('test')
     cb1 = Callback()
     cb2 = Callback()
     cb3 = Callback()
@@ -50,7 +50,7 @@ def test_timer_model_can_cancel_events(data):
 
 @given(st.data())
 def test_timer_model_works_with_repeating_timers(data):
-    timer = TimerModel()
+    timer = TimerModel('test')
     cb1 = Callback()
     cb2 = Callback()
     RepeatingTimer(timer, 5, cb1)

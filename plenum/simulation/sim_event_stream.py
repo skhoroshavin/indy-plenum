@@ -47,38 +47,6 @@ class SimEventStream(ABC):
         return result
 
 
-@composite
-def sim_event_stream(draw, stream: SimEventStream, max_size=100):
-    result = []
-    for _ in range(max_size):
-        event = stream.peek()
-        if event is None:
-            break
-        result.append(event)
-        if isinstance(event.payload, ErrorEvent):
-            break
-        stream.advance(draw)
-    return result
-
-
-class RandomEventStream(SimEventStream):
-    def __init__(self, draw, events, min_interval=1, max_interval=100, start_ts=0):
-        self._events = events
-        self._interval = st.integers(min_value=min_interval, max_value=max_interval)
-        self._ts = start_ts
-        self.advance(draw)
-
-    def advance(self, draw):
-        self._ts += draw(self._interval)
-        self._next_event = SimEvent(timestamp=self._ts, payload=draw(self._events))
-
-    def peek(self) -> Optional[SimEvent]:
-        return self._next_event
-
-    def sort(self):
-        pass
-
-
 class ListEventStream(SimEventStream):
     def __init__(self, events: Iterable[SimEvent] = ()):
         self._events = SortedListWithKey(iterable=events, key=lambda ev: ev.timestamp)

@@ -4,8 +4,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from plenum.simulation.helper import some_events, MAX_EVENTS_SIZE, check_event_stream_invariants, some_event
-from plenum.simulation.sim_event_stream import ListEventStream, sim_event_stream, SimEvent, ErrorEvent, \
-    CompositeEventStream
+from plenum.simulation.sim_event_stream import ListEventStream, SimEvent, ErrorEvent, CompositeEventStream
 from plenum.simulation.sim_model import SimModel, process_model, ModelWithExternalEvents
 
 
