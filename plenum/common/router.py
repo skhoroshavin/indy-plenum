@@ -51,19 +51,26 @@ class Router:
 
 class Subscription:
     def __init__(self):
-        self._subscriptions = []  # type: List[Tuple[Router, Router.SubscriptionID]]
+        self._subscriptions = defaultdict(list)  # type: Dict[Type, List[Tuple[Router, Router.SubscriptionID]]]
 
     def subscribe(self, router: Router, message_type: Type, handler: Callable):
         """
         Subscribe handler to specific message on specific router
         """
         sid = router.subscribe(message_type, handler)
-        self._subscriptions.append((router, sid))
+        self._subscriptions[message_type].append((router, sid))
+
+    def unsubscribe_by_type(self, message_type: Type):
+        subscriptions = self._subscriptions.get(message_type, [])
+        for router, sid in subscriptions:
+            router.unsubscribe(sid)
+        subscriptions.clear()
 
     def unsubscribe_all(self):
         """
         Unsubscribe from all messages from all routers previously subscribed using this instance
         """
-        for router, sid in self._subscriptions:
-            router.unsubscribe(sid)
+        for subscriptions in self._subscriptions.values():
+            for router, sid in subscriptions:
+                router.unsubscribe(sid)
         self._subscriptions.clear()

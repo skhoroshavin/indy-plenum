@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from functools import partial
-from typing import Callable, Any, Dict, Type, Optional, Iterable, Tuple
+from typing import Callable, Any, Dict, Type, Optional, Iterable, Tuple, List
 
 from sortedcontainers import SortedListWithKey
 
@@ -102,10 +102,18 @@ class StashingRouter(Router):
         # This is a replica's method that moves the message to the inBox, rather than
         # calling the handler immediately, as the default router does.
         self._replica_unstash = replica_unstash
-        self._subscriptions = Subscription()
+        self._routers = {}  # type: Dict[Router, Subscription]
 
     def set_sorted_stasher(self, code: int, key: Callable):
         self._queues[code] = SortedStash(self._limit, key)
+
+    def subscribe_to(self, router: Router):
+        if router in self._routers:
+            return
+        self._routers[router] = Subscription()
+
+        for message_type in self.message_types:
+            for handler in self.handlers(message_type):
 
     def subscribe(self, message_type: Type, handler: Handler, allow_override=False) -> Router.SubscriptionID:
         if not allow_override and message_type in self.message_types:
