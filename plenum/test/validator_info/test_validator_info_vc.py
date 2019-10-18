@@ -12,13 +12,10 @@ from stp_core.loop.eventually import eventually
 
 @pytest.fixture(scope="module")
 def tconf(tconf):
-    old_catchup_timeout = tconf.MIN_TIMEOUT_CATCHUPS_DONE_DURING_VIEW_CHANGE
-    old_view_change_timeout = tconf.VIEW_CHANGE_TIMEOUT
-    tconf.MIN_TIMEOUT_CATCHUPS_DONE_DURING_VIEW_CHANGE = 15
-    tconf.VIEW_CHANGE_TIMEOUT = 30
+    old_new_view_timeout = tconf.NEW_VIEW_TIMEOUT
+    tconf.NEW_VIEW_TIMEOUT = 30
     yield tconf
-    tconf.MIN_TIMEOUT_CATCHUPS_DONE_DURING_VIEW_CHANGE = old_catchup_timeout
-    tconf.VIEW_CHANGE_TIMEOUT = old_view_change_timeout
+    tconf.NEW_VIEW_TIMEOUT = old_new_view_timeout
 
 
 def test_number_txns_in_catchup_and_vc_queue_valid(looper,

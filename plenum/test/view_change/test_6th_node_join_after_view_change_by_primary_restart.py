@@ -7,11 +7,8 @@ from plenum.test.helper import sdk_send_random_and_check
 
 from stp_core.common.log import getlogger
 from stp_core.loop.eventually import eventually
-from plenum.test.node_catchup.helper import check_ledger_state, \
-    waitNodeDataEquality
-from plenum.common.util import randomString
-from plenum.test.test_node import checkNodesConnected, ensureElectionsDone
-from plenum.test.pool_transactions.helper import sdk_add_new_steward_and_node, sdk_pool_refresh
+from plenum.test.node_catchup.helper import check_ledger_state
+from plenum.test.test_node import ensureElectionsDone
 from plenum.test import waits
 from plenum.common.startable import Mode
 
@@ -25,14 +22,9 @@ def limitTestRunningTime():
 
 @pytest.fixture(scope="module", autouse=True)
 def tconf(tconf):
-    old_vc_timeout = tconf.VIEW_CHANGE_TIMEOUT
     old_max_reconnect_retry = tconf.MAX_RECONNECT_RETRY_ON_SAME_SOCKET
     tconf.MAX_RECONNECT_RETRY_ON_SAME_SOCKET = 0
-    tconf.VIEW_CHANGE_TIMEOUT = 30
-
     yield tconf
-
-    tconf.VIEW_CHANGE_TIMEOUT = old_vc_timeout
     tconf.MAX_RECONNECT_RETRY_ON_SAME_SOCKET = old_max_reconnect_retry
 
 
